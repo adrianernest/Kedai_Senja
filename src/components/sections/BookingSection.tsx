@@ -17,7 +17,8 @@ import {
   Compass, 
   Info,
   ShieldCheck,
-  Armchair
+  Armchair,
+  Check
 } from 'lucide-react';
 
 export default function BookingSection() {
@@ -43,6 +44,32 @@ export default function BookingSection() {
   // Generated Booking Reference
   const [bookingRef, setBookingRef] = useState<string>('');
   const [showTicketModal, setShowTicketModal] = useState<boolean>(false);
+
+  // Quick 7-Day Dates Generator
+  const upcomingDates = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    const iso = d.toISOString().split('T')[0];
+    const dayName = d.toLocaleDateString(locale === 'id' ? 'id-ID' : 'en-US', { weekday: 'short' });
+    const dayNum = d.getDate();
+    const monthName = d.toLocaleDateString(locale === 'id' ? 'id-ID' : 'en-US', { month: 'short' });
+    const isToday = i === 0;
+    const isTomorrow = i === 1;
+
+    let label = isToday
+      ? (locale === 'id' ? 'Hari Ini' : 'Today')
+      : isTomorrow
+      ? (locale === 'id' ? 'Besok' : 'Tomorrow')
+      : dayName;
+
+    return {
+      iso,
+      label,
+      dayNum,
+      monthName,
+      isWeekend: d.getDay() === 0 || d.getDay() === 6,
+    };
+  });
 
   // Realistic Smart Time Slots with Golden Hour / Sunset indicator
   const timeSlotGroups = [
@@ -160,7 +187,7 @@ export default function BookingSection() {
           <form onSubmit={handleFormSubmit} className="space-y-10">
             
             {/* STEP 1: Date & Smart Slot Availability */}
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div className="flex items-center justify-between border-b border-[#f0e3d3] pb-3">
                 <div className="flex items-center gap-2 text-[#3b2314]">
                   <Calendar className="w-5 h-5 text-[#bf5b27]" />
@@ -173,88 +200,118 @@ export default function BookingSection() {
                 </span>
               </div>
 
-              {/* Date Input with helper text */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                <div className="md:col-span-4 bg-[#faf5ee] p-4 rounded-2xl border border-[#ebdccb]">
-                  <label className="block text-xs font-bold text-[#624c3c] uppercase tracking-wider mb-2">
-                    {locale === 'id' ? 'Tanggal Kunjungan' : 'Visit Date'}
-                  </label>
+              {/* 1-Click Date Selector Bar */}
+              <div>
+                <label className="block text-xs font-bold text-[#624c3c] uppercase tracking-wider mb-2.5">
+                  {locale === 'id' ? 'Pilih Tanggal Kedatangan (Klik Cepat 7 Hari Ke Depan):' : 'Select Visit Date (Quick 7-Day Bar):'}
+                </label>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+                  {upcomingDates.map((item) => {
+                    const isSelected = selectedDate === item.iso;
+                    return (
+                      <button
+                        key={item.iso}
+                        type="button"
+                        onClick={() => setSelectedDate(item.iso)}
+                        className={`p-3 rounded-2xl border-2 text-center transition-all ${
+                          isSelected
+                            ? 'bg-[#3b2214] text-white border-[#3b2214] shadow-md ring-2 ring-[#bf5b27]/30 scale-[1.02]'
+                            : 'bg-[#faf5ed] hover:bg-[#ebdccb] text-[#3e271a] border-[#e2d2c1]'
+                        }`}
+                      >
+                        <span className="text-[10px] font-bold uppercase tracking-wider block opacity-80">
+                          {item.label}
+                        </span>
+                        <span className="font-serif text-lg font-bold block my-0.5">
+                          {item.dayNum}
+                        </span>
+                        <span className="text-[10px] block font-semibold opacity-75">
+                          {item.monthName}
+                        </span>
+                        {item.isWeekend && (
+                          <span className={`text-[9px] font-bold block mt-1 px-1.5 py-0.2 rounded-full ${isSelected ? 'bg-[#bf5b27] text-white' : 'bg-[#e5d2be] text-[#6d4d38]'}`}>
+                            Live Music
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Or Custom Date Input */}
+                <div className="flex items-center gap-2 mt-3 text-xs text-[#735c4b]">
+                  <span>{locale === 'id' ? 'Atau pilih tanggal khusus:' : 'Or choose specific date:'}</span>
                   <input
                     type="date"
                     min={new Date().toISOString().split('T')[0]}
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 rounded-xl bg-white border border-[#d9c7b2] text-[#321c10] font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-[#bf5b27] shadow-sm"
+                    className="px-3 py-1.5 rounded-xl bg-[#faf5ee] border border-[#d9c7b2] text-[#321c10] font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-[#bf5b27]"
                   />
-                  <p className="text-[11px] text-[#866e5e] mt-2 leading-snug">
-                    {locale === 'id'
-                      ? '📅 Reservasi dibuka hingga 14 hari ke depan.'
-                      : '📅 Bookings available up to 14 days in advance.'}
-                  </p>
                 </div>
+              </div>
 
-                {/* Sesi Jam & Real-time Availability */}
-                <div className="md:col-span-8 space-y-3">
-                  <span className="block text-xs font-bold text-[#624c3c] uppercase tracking-wider">
-                    {locale === 'id' ? 'Pilihan Slot Jam Kedatangan' : 'Available Time Slots'}
-                  </span>
+              {/* Time Slots */}
+              <div className="space-y-3 pt-2">
+                <span className="block text-xs font-bold text-[#624c3c] uppercase tracking-wider">
+                  {locale === 'id' ? 'Pilihan Slot Jam Kedatangan (Klik untuk Memilih):' : 'Available Time Slots (Click to Select):'}
+                </span>
 
-                  <div className="space-y-3">
-                    {timeSlotGroups.map((group, groupIdx) => {
-                      const Icon = group.icon;
-                      return (
-                        <div
-                          key={groupIdx}
-                          className={`p-3 rounded-xl border ${
-                            group.highlight
-                              ? 'bg-[#fbf4eb] border-[#debba3]'
-                              : 'bg-[#faf6f0] border-[#ecdcc9]'
-                          }`}
-                        >
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-[#442817] mb-2">
-                            <Icon className="w-3.5 h-3.5 text-[#bf5b27]" />
-                            <span>{group.groupName[locale]}</span>
-                          </div>
+                <div className="space-y-3">
+                  {timeSlotGroups.map((group, groupIdx) => {
+                    const Icon = group.icon;
+                    return (
+                      <div
+                        key={groupIdx}
+                        className={`p-3.5 rounded-2xl border ${
+                          group.highlight
+                            ? 'bg-[#fbf4eb] border-[#debba3]'
+                            : 'bg-[#faf6f0] border-[#ecdcc9]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-[#442817] mb-2.5">
+                          <Icon className="w-3.5 h-3.5 text-[#bf5b27]" />
+                          <span>{group.groupName[locale]}</span>
+                        </div>
 
-                          <div className="grid grid-cols-3 gap-2">
-                            {group.slots.map((slot) => {
-                              const isSelected = selectedTime === slot.time;
-                              const isLimited = slot.status === 'limited';
+                        <div className="grid grid-cols-3 gap-2.5">
+                          {group.slots.map((slot) => {
+                            const isSelected = selectedTime === slot.time;
+                            const isLimited = slot.status === 'limited';
 
-                              return (
-                                <button
-                                  key={slot.time}
-                                  type="button"
-                                  onClick={() => setSelectedTime(slot.time)}
-                                  className={`p-2.5 rounded-xl text-center transition-all border ${
+                            return (
+                              <button
+                                key={slot.time}
+                                type="button"
+                                onClick={() => setSelectedTime(slot.time)}
+                                className={`p-3 rounded-xl text-center transition-all border-2 ${
+                                  isSelected
+                                    ? 'bg-[#3b2214] text-white border-[#3b2214] shadow-md ring-2 ring-[#bf5b27]/30 scale-[1.02]'
+                                    : 'bg-white hover:bg-[#f6ede2] text-[#3e291c] border-[#e2d2c1]'
+                                }`}
+                              >
+                                <span className="font-bold text-sm block">
+                                  {slot.time} WIB
+                                </span>
+                                <span
+                                  className={`text-[10px] block mt-0.5 font-medium ${
                                     isSelected
-                                      ? 'bg-[#3b2214] text-white border-[#3b2214] shadow-md ring-2 ring-[#bf5b27]/30'
-                                      : 'bg-white hover:bg-[#f6ede2] text-[#3e291c] border-[#e2d2c1]'
+                                      ? 'text-[#e5bf99]'
+                                      : isLimited
+                                      ? 'text-amber-700 font-bold'
+                                      : 'text-[#846b5a]'
                                   }`}
                                 >
-                                  <span className="font-bold text-sm block">
-                                    {slot.time} WIB
-                                  </span>
-                                  <span
-                                    className={`text-[10px] block mt-0.5 font-medium ${
-                                      isSelected
-                                        ? 'text-[#e5bf99]'
-                                        : isLimited
-                                        ? 'text-amber-700 font-bold'
-                                        : 'text-[#846b5a]'
-                                    }`}
-                                  >
-                                    {slot.note[locale]}
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
+                                  {slot.note[locale]}
+                                </span>
+                              </button>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -327,24 +384,30 @@ export default function BookingSection() {
               />
 
               {/* Selected Table Confirmation Banner */}
-              <div className="p-3.5 rounded-xl bg-[#faf5ed] border border-[#e5d5c0] flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#3b2214] text-white flex items-center justify-center font-mono font-bold text-xs">
+              <div className="p-4 rounded-2xl bg-[#faf5ed] border-2 border-[#bf5b27] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#bf5b27] text-white flex items-center justify-center font-mono font-bold text-sm shadow">
                     {selectedTable.code}
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-[#2e190e] block">
+                    <span className="text-xs uppercase font-bold text-[#bf5b27] tracking-wider block">
+                      {locale === 'id' ? 'Meja Terpilih Saat Ini' : 'Currently Selected Table'}
+                    </span>
+                    <span className="text-sm font-serif font-bold text-[#2e190e]">
                       {selectedTable.name[locale]} (Kapasitas: {selectedTable.capacity} Kursi)
                     </span>
-                    <span className="text-[11px] text-[#735e50]">
+                    <span className="text-xs text-[#735e50] block mt-0.5">
                       {selectedTable.features[locale].join(' • ')}
                     </span>
                   </div>
                 </div>
 
-                <span className="text-xs font-bold text-[#bf5b27] uppercase">
-                  {locale === 'id' ? 'Meja Terpilih' : 'Table Selected'}
-                </span>
+                <div className="flex items-center gap-2 self-start sm:self-center">
+                  <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center gap-1 border border-emerald-300">
+                    <Check className="w-3.5 h-3.5" />
+                    <span>{locale === 'id' ? 'Siap Dipesan' : 'Ready to Book'}</span>
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -377,7 +440,7 @@ export default function BookingSection() {
                         onClick={() => setGuestCount(num)}
                         className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                           guestCount === num
-                            ? 'bg-[#3b2314] text-white shadow-md'
+                            ? 'bg-[#3b2214] text-white shadow-md'
                             : exceedsCapacity
                             ? 'bg-[#f0e6da] text-[#a49182] border border-dashed border-[#d8c7b4]'
                             : 'bg-[#faf5ed] text-[#5c4435] border border-[#d9c7b2] hover:bg-[#ebdccb]'
