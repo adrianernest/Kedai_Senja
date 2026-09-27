@@ -1,26 +1,62 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-playfair), Georgia, serif;
+  --font-sans: var(--font-sans), system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #fbf8f2;
+  --foreground: #251811;
+  --primary: #412415;
+  --primary-foreground: #fcf9f2;
+  --accent: #bf5b27;
+  --accent-gold: #c98e32;
+  --surface: #f4ecdf;
+  --card: #ffffff;
+  --card-border: #e8dccb;
+  --muted: #736054;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Vintage Warm Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f4ecdf;
+}
+::-webkit-scrollbar-thumb {
+  background: #aa8671;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #734e38;
+}
+
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+/* Subtle vintage paper texture effect */
+.bg-vintage-grain {
+  background-color: #fbf8f2;
+  background-image: radial-gradient(#d3c1ac 0.75px, transparent 0.75px);
+  background-size: 18px 18px;
+}
+
+.bg-dark-vintage {
+  background-color: #1a0f0a;
+  background-image: radial-gradient(#3a271c 0.75px, transparent 0.75px);
+  background-size: 18px 18px;
 }
